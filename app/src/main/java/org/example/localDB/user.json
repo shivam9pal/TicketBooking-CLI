@@ -1,0 +1,30 @@
+[
+  {
+    "user_id": "abcd",
+    "name": "shivam",
+    "hashed_Password": "23456",
+    "tickets_booked": [
+      {
+        "source": "delhi",
+        "destination": "Shahjahanpur",
+        "date_of_travel": "2024-11-09T18:30:00Z",
+        "train": {
+          "train_id": "xyz",
+          "train_no": "12345",
+          "seats": [
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0]
+          ],
+          "station": {
+            "delhi": "13:50:00",
+            "moradabad": "13:50:00",
+            "bareily": "13:50:00",
+            "shahjahanpur": "13:50:00"
+          }
+        }
+      }
+    ]
+  }
+]
