@@ -9,7 +9,7 @@ public class User {
 
     private String hashedPassword;
 
-    private List<Ticket> tickets;
+    private List<Ticket> ticketsBooked;
 
     private String userId;
 
@@ -17,7 +17,7 @@ public class User {
         this.name=name;
         this.password=password;
         this.hashedPassword=hashedPassword;
-        this.tickets=tickets;
+        this.ticketsBooked=tickets;
         this.userId=userId;
     }
     //default constructor for without value
@@ -38,5 +38,33 @@ public class User {
     }
     public String getUserId(){
         return userId;
+    }
+
+    //print tickets
+
+    public void printTickets(){
+        for (int i=0;i<ticketsBooked.size();i++){
+            System.out.println(ticketsBooked.get(i).getTicketInfo());
+        }
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setHashedPassword(String hashedPassword) {
+        this.hashedPassword = hashedPassword;
+    }
+
+    public void setTicketsBooked(List<Ticket> ticketsBooked) {
+        this.ticketsBooked = ticketsBooked;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }
