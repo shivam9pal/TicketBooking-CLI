@@ -45,6 +45,7 @@ public class Ticket {
     }
 
     public Date getDateOfTravel() {
+
         return dateOfTravel;
     }
 
@@ -59,10 +60,12 @@ public class Ticket {
     }
 
     public void setUserId(String userId) {
+
         this.userId = userId;
     }
 
-    public void setSource(String source) {
+    public void setSource(String source)
+    {
         this.source = source;
     }
 

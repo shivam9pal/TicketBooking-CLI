@@ -32,7 +32,7 @@ public class Train {
     }
 
     public String getTrainId() {
-        return trainId;
+        return  trainId;
     }
 
     public Map<String, String> getStationTimes() {
