@@ -6,6 +6,8 @@ import org.example.services.UserBookingService;
 import org.example.util.UserServiceUtil;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,16 +19,16 @@ public class App {
     public static void main(String[] args) {
         System.out.println("Running Train Booking System");
         Scanner scanner = new Scanner(System.in);
-        int option = 0;
         UserBookingService userBookingService;
-        try{
+        try {
             userBookingService = new UserBookingService();
-        }catch(IOException ex){
-            System.out.println("There is something wrong");
+        } catch (IOException ex) {
+            System.out.println("Error initializing system: " + ex.getMessage());
             return;
         }
-        while(option!=7){
-            System.out.println("Choose option");
+        Train trainSelectedForBooking = null; // Initialize to null
+        while (true) {
+            System.out.println("\nChoose option:");
             System.out.println("1. Sign up");
             System.out.println("2. Login");
             System.out.println("3. Fetch Bookings");
@@ -34,27 +36,31 @@ public class App {
             System.out.println("5. Book a Seat");
             System.out.println("6. Cancel my Booking");
             System.out.println("7. Exit the App");
-            option = scanner.nextInt();
-            Train trainSelectedForBooking = new Train();
-            switch (option){
+            int option = getValidIntInput(scanner, "Enter your choice (1-7)");
+            switch (option) {
                 case 1:
-                    System.out.println("Enter the username to signup");
-                    String nameToSignUp = scanner.next();
-                    System.out.println("Enter the password to signup");
-                    String passwordToSignUp = scanner.next();
+                    String nameToSignUp = getValidStringInput(scanner, "Enter the username to signup");
+                    String passwordToSignUp = getValidStringInput(scanner, "Enter the password to signup");
                     User userToSignup = new User(nameToSignUp, passwordToSignUp, UserServiceUtil.hashPassword(passwordToSignUp), new ArrayList<>(), UUID.randomUUID().toString());
-                    userBookingService.signUp(userToSignup);
+                    if (userBookingService.signUp(userToSignup)) {
+                        System.out.println("Sign-up successful!");
+                    } else {
+                        System.out.println("Sign-up failed. Please try again.");
+                    }
                     break;
                 case 2:
-                    System.out.println("Enter the username to Login");
-                    String nameToLogin = scanner.next();
-                    System.out.println("Enter the password to signup");
-                    String passwordToLogin = scanner.next();
+                    String nameToLogin = getValidStringInput(scanner, "Enter the username to login");
+                    String passwordToLogin = getValidStringInput(scanner, "Enter the password to login");
                     User userToLogin = new User(nameToLogin, passwordToLogin, UserServiceUtil.hashPassword(passwordToLogin), new ArrayList<>(), UUID.randomUUID().toString());
-                    try{
+                    try {
                         userBookingService = new UserBookingService(userToLogin);
-                    }catch (IOException ex){
-                        return;
+                        if (userBookingService.loginUser()) {
+                            System.out.println("Login successful!");
+                        } else {
+                            System.out.println("Invalid username or password.");
+                        }
+                    } catch (IOException ex) {
+                        System.out.println("Error during login: " + ex.getMessage());
                     }
                     break;
                 case 3:
@@ -62,46 +68,63 @@ public class App {
                     userBookingService.fetchBookings();
                     break;
                 case 4:
-                    System.out.println("Type your source station");
-                    String source = scanner.next();
-                    System.out.println("Type your destination station");
-                    String dest = scanner.next();
+                    String source = getValidStringInput(scanner, "Type your source station");
+                    String dest = getValidStringInput(scanner, "Type your destination station");
                     List<Train> trains = userBookingService.getTrains(source, dest);
+                    if (trains.isEmpty()) {
+                        System.out.println("No trains found for the given route.");
+                        break;
+                    }
                     int index = 1;
-                    for (Train t: trains){
-                        System.out.println(index+" Train id : "+t.getTrainId());
-                        for (Map.Entry<String, String> entry: t.getStationTimes().entrySet()){
-                            System.out.println("station "+entry.getKey()+" time: "+entry.getValue());
+                    for (Train t : trains) {
+                        System.out.printf("%d. Train ID: %s, Train No: %s%n", index++, t.getTrainId(), t.getTrainNo());
+                        for (Map.Entry<String, String> entry : t.getStationTimes().entrySet()) {
+                            System.out.printf("  Station: %s, Time: %s%n", entry.getKey(), entry.getValue());
                         }
                     }
-                    System.out.println("Select a train by typing 1,2,3...");
-                    trainSelectedForBooking = trains.get(scanner.nextInt());
+                    int trainIndex = getValidIntInput(scanner, "Select a train by typing 1,2,3...") - 1;
+                    if (trainIndex >= 0 && trainIndex < trains.size()) {
+                        trainSelectedForBooking = trains.get(trainIndex);
+                    } else {
+                        System.out.println("Invalid train selection.");
+                    }
                     break;
                 case 5:
-                    System.out.println("Select a seat out of these seats");
+                    if (trainSelectedForBooking == null || trainSelectedForBooking.getTrainId() == null) {
+                        System.out.println("Please search and select a train first.");
+                        break;
+                    }
+                    System.out.println("Seat Map ([ ] = Available, [X] = Booked):");
                     List<List<Integer>> seats = userBookingService.fetchSeats(trainSelectedForBooking);
-                    for (List<Integer> row: seats){
-                        for (Integer val: row){
-                            System.out.print(val+" ");
+                    for (int i = 0; i < seats.size(); i++) {
+                        System.out.printf("Row %d: ", i);
+                        for (Integer val : seats.get(i)) {
+                            System.out.print(val == 0 ? "[ ]" : "[X]");
                         }
                         System.out.println();
                     }
-                    System.out.println("Select the seat by typing the row and column");
-                    System.out.println("Enter the row");
-                    int row = scanner.nextInt();
-                    System.out.println("Enter the column");
-                    int col = scanner.nextInt();
+                    int row = getValidIntInput(scanner, "Enter the row");
+                    int col = getValidIntInput(scanner, "Enter the column");
+                    String bookSource = getValidStringInput(scanner, "Enter source station");
+                    String bookDest = getValidStringInput(scanner, "Enter destination station");
+                    String dateInput = getValidStringInput(scanner, "Enter date of travel (YYYY-MM-DDThh:mm:ssZ)");
+                    ZonedDateTime dateOfTravel;
+                    try {
+                        dateOfTravel = ZonedDateTime.parse(dateInput);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Invalid date format. Use YYYY-MM-DDThh:mm:ssZ");
+                        break;
+                    }
                     System.out.println("Booking your seat....");
-                    Boolean booked = userBookingService.bookTrainSeat(trainSelectedForBooking, row, col);
-                    if(booked.equals(Boolean.TRUE)){
+                    Boolean booked = userBookingService.bookTrainSeat(trainSelectedForBooking, row, col, bookSource, bookDest, dateOfTravel);
+                    if (booked) {
                         System.out.println("Booked! Enjoy your journey");
-                    }else{
+                    } else {
                         System.out.println("Can't book this seat");
                     }
                     break;
                 case 6:
-                    System.out.println("Enter the ticket ID to cancel");
-                    String ticketId = scanner.next();
+                    String ticketId = getValidStringInput(scanner, "Enter the ticket ID to cancel");
                     boolean cancelled = userBookingService.cancelBooking(ticketId);
                     if (cancelled) {
                         System.out.println("Booking cancelled successfully");
@@ -109,9 +132,32 @@ public class App {
                         System.out.println("Failed to cancel booking");
                     }
                     break;
+                case 7:
+                    System.out.println("Exiting the App");
+                    scanner.close();
+                    return;
                 default:
+                    System.out.println("Invalid option. Please choose 1-7.");
                     break;
             }
         }
+    }
+
+    private static int getValidIntInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.println(prompt);
+            try {
+                return scanner.nextInt();
+            } catch (java.util.InputMismatchException e) {
+                System.out.println("Please enter a valid number.");
+                scanner.nextLine(); // Clear invalid input
+            }
+        }
+    }
+
+    private static String getValidStringInput(Scanner scanner, String prompt) {
+        System.out.println(prompt);
+        scanner.nextLine(); // Clear buffer
+        return scanner.nextLine();
     }
 }
