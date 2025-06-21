@@ -1,0 +1,19 @@
+[
+  {
+    "train_id": "xyz",
+    "train_no": "12345",
+    "seats": [
+      [0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0]
+    ],
+    "station_times": {
+      "delhi": "13:50:00",
+      "moradabad": "13:50:00",
+      "bareily": "13:50:00",
+      "shahjahanpur": "13:50:00"
+    },
+    "stations": ["delhi", "moradabad", "bareily", "shahjahanpur"]
+  }
+]
